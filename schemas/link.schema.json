@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/link.schema.json",
+  "title": "Link Record",
+  "description": "A share link record for Link Shelf",
+  "type": "object",
+  "required": ["id", "title", "url", "provider", "category", "status", "publishedAt"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable unique identifier, use semantic ID or content hash"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Resource title"
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Share link URL"
+    },
+    "accessCode": {
+      "type": "string",
+      "description": "Access code / extraction code if required"
+    },
+    "provider": {
+      "type": "string",
+      "enum": ["baidu", "aliyun", "quark", "lanzou", "onedrive", "google", "mega", "other"],
+      "description": "Cloud drive provider"
+    },
+    "category": {
+      "type": "string",
+      "description": "Content category"
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "default": []
+    },
+    "description": {
+      "type": "string",
+      "default": ""
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "unavailable"],
+      "default": "active"
+    },
+    "publishedAt": {
+      "type": "string",
+      "format": "date",
+      "description": "Publication date in YYYY-MM-DD format"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,96 @@
+---
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+
+// 读取根目录下的 data/links.json
+const linksPath = resolve(process.cwd(), '../data/links.json');
+const links = JSON.parse(readFileSync(linksPath, 'utf-8'));
+---
+
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Link Shelf</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+        background: #f9fafb;
+        color: #111827;
+      }
+      h1 {
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 0.5rem;
+      }
+      .link-item {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1rem 1.25rem;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        transition: box-shadow 0.15s;
+      }
+      .link-item:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      }
+      .link-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+      .link-title a {
+        color: #2563eb;
+        text-decoration: none;
+      }
+      .link-title a:hover {
+        text-decoration: underline;
+      }
+      .link-meta {
+        margin-top: 0.25rem;
+        font-size: 0.85rem;
+        color: #6b7280;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+      .link-meta span {
+        background: #f3f4f6;
+        padding: 0.1rem 0.5rem;
+        border-radius: 0.25rem;
+      }
+      .empty {
+        text-align: center;
+        color: #6b7280;
+        padding: 3rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>📚 Link Shelf</h1>
+    {links.length === 0 ? (
+      <div class="empty">暂无链接</div>
+    ) : (
+      <ul style="list-style: none; padding: 0; margin: 0;">
+        {links.map(link => (
+          <li class="link-item" key={link.id}>
+            <div class="link-title">
+              <a href={link.url} target="_blank" rel="noopener noreferrer">
+                {link.title || link.url}
+              </a>
+            </div>
+            <div class="link-meta">
+              {link.category && <span>分类：{link.category}</span>}
+              {link.provider && <span>来源：{link.provider}</span>}
+              {link.publishedAt && <span>日期：{link.publishedAt}</span>}
+              {link.accessCode && <span>提取码：{link.accessCode}</span>}
+            </div>
+          </li>
+        ))}
+      </ul>
+    )}
+  </body>
+</html>
