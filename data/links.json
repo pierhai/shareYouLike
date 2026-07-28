@@ -58,5 +58,17 @@
     "description": "",
     "status": "active",
     "publishedAt": "2026-07-28"
+  },
+  {
+    "id": "ee01914abb2e",
+    "title": "mobaXterm_professional",
+    "url": "https://pan.quark.cn/s/ee01914abb2e",
+    "accessCode": "",
+    "provider": "quark",
+    "category": "软件",
+    "tags": [],
+    "description": "",
+    "status": "active",
+    "publishedAt": "2026-07-28"
   }
 ]
