@@ -58,3 +58,10 @@ private links that are not intended for anyone with access to the site.
 
 Publish only links that you have the right to distribute. The site should
 provide a contact and removal channel before it is made public.
+
+## how to run
+node scripts/import.mjs data/batch-import.txt
+
+git add data/links.json data/batch-import.txt
+git commit -m "增量添加链接"
+git push origin main
