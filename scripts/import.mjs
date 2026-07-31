@@ -8,6 +8,42 @@ const root = join(__dirname, '..');
 
 // ----- Config -----
 const DATA_FILE = join(root, 'data', 'links.json');
+const TAG_MAPPINGS_FILE = join(root, 'tag-mappings.json');
+
+// ----- Tag mappings -----
+function loadTagMappings() {
+  try {
+    if (existsSync(TAG_MAPPINGS_FILE)) {
+      return JSON.parse(readFileSync(TAG_MAPPINGS_FILE, 'utf-8'));
+    }
+  } catch (err) {
+    console.warn(`⚠️  Failed to parse tag-mappings.json: ${err.message}. Using defaults.`);
+  }
+  // 默认映射：关键词 -> 标签
+  return {
+    '付费': '付费',
+    '免费': '免费',
+    '教程': '教程',
+    '课程': '课程',
+    '电子书': '电子书',
+    '电影': '电影',
+    '音乐': '音乐',
+    '软件': '软件',
+    '漫画': '漫画',
+    '小说': '小说',
+    '合集': '合集',
+  };
+}
+
+function generateTags(title, mappings) {
+  const tags = [];
+  for (const [keyword, tag] of Object.entries(mappings)) {
+    if (title.includes(keyword)) {
+      tags.push(tag);
+    }
+  }
+  return [...new Set(tags)];
+}
 
 // ----- Step 1: Parse share text (Quark / Baidu / etc.) -----
 function parseShareText(raw) {
@@ -29,14 +65,14 @@ function parseShareText(raw) {
     else if (url.includes('aliyundrive.com') || url.includes('alipan.com')) provider = 'aliyun';
     else if (url.includes('lanzou')) provider = 'lanzou';
 
+    const tags = generateTags(title, loadTagMappings());
     records.push({
       id,
       title,
       url,
       accessCode: '',
       provider,
-      category: 'uncategorized',
-      tags: [],
+      tags,
       description: '',
       status: 'active',
       publishedAt: new Date().toISOString().split('T')[0],
@@ -116,15 +152,31 @@ function loadExisting(filePath) {
   }
 }
 
+function migrateCategoryToTags(record) {
+  // 将旧的 category 字段迁移到 tags
+  if (record.category && record.category !== 'uncategorized') {
+    if (!record.tags || !Array.isArray(record.tags)) {
+      record.tags = [];
+    }
+    if (!record.tags.includes(record.category)) {
+      record.tags.push(record.category);
+    }
+  }
+  delete record.category;
+  if (!record.tags) record.tags = [];
+  return record;
+}
+
 function mergeRecords(existing, incoming) {
   const map = new Map();
   for (const record of existing) {
-    map.set(record.id, record);
+    map.set(record.id, migrateCategoryToTags(record));
   }
   let updated = 0, added = 0;
   for (const record of incoming) {
-    if (map.has(record.id)) { map.set(record.id, record); updated++; }
-    else { map.set(record.id, record); added++; }
+    const migrated = migrateCategoryToTags(record);
+    if (map.has(migrated.id)) { map.set(migrated.id, migrated); updated++; }
+    else { map.set(migrated.id, migrated); added++; }
   }
   return { merged: Array.from(map.values()), updated, added };
 }

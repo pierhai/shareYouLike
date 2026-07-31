@@ -4,7 +4,7 @@
   "title": "Link Record",
   "description": "A share link record for Link Shelf",
   "type": "object",
-  "required": ["id", "title", "url", "provider", "category", "status", "publishedAt"],
+  "required": ["id", "title", "url", "provider", "status", "publishedAt"],
   "properties": {
     "id": {
       "type": "string",
@@ -31,7 +31,8 @@
     },
     "category": {
       "type": "string",
-      "description": "Content category"
+      "description": "[Deprecated] Use tags instead",
+      "deprecated": true
     },
     "tags": {
       "type": "array",

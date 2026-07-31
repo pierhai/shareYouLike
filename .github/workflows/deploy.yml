@@ -25,6 +25,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
         working-directory: astro-site
+      - name: Import links from batch-import.txt
+        run: node scripts/import.mjs data/batch-import.txt
       - name: Build
         run: npm run build
         working-directory: astro-site
