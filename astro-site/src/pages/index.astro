@@ -150,17 +150,13 @@ links.forEach(link => {
     }
     .link-meta {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       align-items: center;
       gap: 8px;
       font-size: 12px;
       color: #999;
-    }
-    .link-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      margin-top: 8px;
+      overflow-x: auto;
+      white-space: nowrap;
     }
     .link-tag {
       display: inline-block;
@@ -171,6 +167,7 @@ links.forEach(link => {
       font-size: 12px;
       cursor: pointer;
       transition: background 0.2s;
+      white-space: nowrap;
     }
     .link-tag:hover {
       background: #d6e8ff;
@@ -217,16 +214,12 @@ links.forEach(link => {
               <div class="link-desc">{link.description}</div>
             )}
             <div class="link-meta">
-              <span>📅 {link.publishedAt || '未知日期'}</span>
               <span>🔗 {link.provider || '未知来源'}</span>
+              <span>📅 {link.publishedAt || '未知日期'}</span>
+              {link.tags && link.tags.length > 0 && link.tags.map(tag => (
+                <span class="link-tag" data-tag={tag}>{tag}</span>
+              ))}
             </div>
-            {link.tags && link.tags.length > 0 && (
-              <div class="link-tags">
-                {link.tags.map(tag => (
-                  <span class="link-tag" data-tag={tag}>{tag}</span>
-                ))}
-              </div>
-            )}
           </div>
         ))}
       </div>
