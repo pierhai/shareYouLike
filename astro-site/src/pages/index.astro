@@ -217,8 +217,8 @@ links.forEach(link => {
               <div class="link-desc">{link.description}</div>
             )}
             <div class="link-meta">
-              <span>📅 {link.date || '未知日期'}</span>
-              <span>🔗 {link.source || '未知来源'}</span>
+              <span>📅 {link.publishedAt || '未知日期'}</span>
+              <span>🔗 {link.provider || '未知来源'}</span>
             </div>
             {link.tags && link.tags.length > 0 && (
               <div class="link-tags">
