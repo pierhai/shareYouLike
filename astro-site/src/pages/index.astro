@@ -1,384 +1,292 @@
 ---
 import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { join } from 'path';
 
-// 读取根目录下的 data/links.json
-const linksPath = resolve(process.cwd(), '../data/links.json');
-const links = JSON.parse(readFileSync(linksPath, 'utf-8'));
+const linksPath = join(process.cwd(), '..', 'data', 'links.json');
+const linksData = JSON.parse(readFileSync(linksPath, 'utf-8'));
+const links = linksData.links || linksData;
 
-// 提取所有分类及计数
-const categorySet = new Set();
-links.forEach(l => {
-  if (l.category && l.category.trim()) {
-    categorySet.add(l.category.trim());
+// 将分类合并到标签中，生成所有标签列表
+const allTags = [...new Set(links.flatMap(link => {
+  let tags = link.tags || [];
+  if (link.category) {
+    tags = [...tags, link.category];
+  }
+  return tags;
+}))].sort();
+
+// 将每个链接的分类合并到标签中
+links.forEach(link => {
+  if (link.category && (!link.tags || !link.tags.includes(link.category))) {
+    link.tags = [...(link.tags || []), link.category];
   }
 });
-const categories = Array.from(categorySet);
-const categoryCounts = {};
-links.forEach(l => {
-  if (l.category && l.category.trim()) {
-    const cat = l.category.trim();
-    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
-  }
-});
-const totalCount = links.length;
 ---
 
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Link Shelf</title>
-    <style>
-      /* Reset & base */
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        background: #f3f4f6;
-        color: #111827;
-        min-height: 100vh;
-        display: flex;
-        justify-content: center;
-        padding: 1rem;
-      }
-      .app {
-        max-width: 1200px;
-        width: 100%;
-        background: #fff;
-        border-radius: 1rem;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        height: fit-content;
-        min-height: 80vh;
-      }
-      /* Header */
-      header {
-        padding: 1.5rem 2rem;
-        border-bottom: 1px solid #e5e7eb;
-        background: #fafbfc;
-      }
-      header h1 {
-        font-size: 1.8rem;
-        margin-bottom: 0.5rem;
-      }
-      .search-container {
-        margin-top: 0.5rem;
-      }
-      #search-input {
-        width: 100%;
-        padding: 0.6rem 1rem;
-        font-size: 1rem;
-        border: 1px solid #d1d5db;
-        border-radius: 0.5rem;
-        outline: none;
-        transition: border-color 0.15s, box-shadow 0.15s;
-      }
-      #search-input:focus {
-        border-color: #2563eb;
-        box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
-      }
-      /* Main layout */
-      main {
-        display: flex;
-        flex: 1;
-        min-height: 400px;
-      }
-      /* Sidebar */
-      .sidebar {
-        width: 220px;
-        background: #f9fafb;
-        padding: 1.5rem 1rem;
-        border-right: 1px solid #e5e7eb;
-        flex-shrink: 0;
-        overflow-y: auto;
-      }
-      .sidebar h2 {
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #6b7280;
-        margin-bottom: 0.75rem;
-        padding-bottom: 0.25rem;
-        border-bottom: 1px solid #e5e7eb;
-      }
-      .sidebar ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-      .sidebar li {
-        padding: 0.5rem 0.75rem;
-        margin-bottom: 0.25rem;
-        border-radius: 0.375rem;
-        cursor: pointer;
-        font-size: 0.95rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        transition: background 0.1s;
-        color: #374151;
-      }
-      .sidebar li:hover {
-        background: #e5e7eb;
-      }
-      .sidebar li.active {
-        background: #2563eb;
-        color: #fff;
-        font-weight: 500;
-      }
-      .sidebar li .count {
-        font-size: 0.8rem;
-        background: rgba(0,0,0,0.06);
-        padding: 0.1rem 0.5rem;
-        border-radius: 1rem;
-        color: #6b7280;
-      }
-      .sidebar li.active .count {
-        background: rgba(255,255,255,0.2);
-        color: #fff;
-      }
-      /* Content */
-      .content {
-        flex: 1;
-        padding: 1.5rem 2rem;
-        overflow-y: auto;
-      }
-      .link-item {
-        background: white;
-        border-radius: 0.5rem;
-        padding: 1rem 1.25rem;
-        margin-bottom: 0.75rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-        transition: box-shadow 0.15s;
-        border: 1px solid #f3f4f6;
-      }
-      .link-item:hover {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      }
-      .link-title {
-        font-weight: 600;
-        font-size: 1.1rem;
-      }
-      .link-title a {
-        color: #2563eb;
-        text-decoration: none;
-      }
-      .link-title a:hover {
-        text-decoration: underline;
-      }
-      .link-meta {
-        margin-top: 0.25rem;
-        font-size: 0.85rem;
-        color: #6b7280;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-      }
-      .link-meta span {
-        background: #f3f4f6;
-        padding: 0.1rem 0.6rem;
-        border-radius: 0.25rem;
-        font-size: 0.8rem;
-      }
-      .empty, .no-results {
-        text-align: center;
-        color: #6b7280;
-        padding: 3rem 0;
-      }
-      .no-results {
-        display: none;
-      }
-      /* Responsive */
-      @media (max-width: 768px) {
-        body { padding: 0.5rem; }
-        main { flex-direction: column; }
-        .sidebar {
-          width: 100%;
-          border-right: none;
-          border-bottom: 1px solid #e5e7eb;
-          padding: 1rem;
-          max-height: 200px;
-          overflow-y: auto;
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Share You Like - GitHub 资源分享</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+    .container {
+      display: flex;
+      min-height: 100vh;
+    }
+    .sidebar {
+      width: 240px;
+      background: #fff;
+      border-right: 1px solid #e0e0e0;
+      padding: 20px 0;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .sidebar h2 {
+      font-size: 16px;
+      font-weight: 600;
+      padding: 0 20px 12px;
+      color: #666;
+      border-bottom: 1px solid #eee;
+      margin-bottom: 10px;
+    }
+    .tag-list {
+      list-style: none;
+    }
+    .tag-list li {
+      padding: 8px 20px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .tag-list li:hover {
+      background: #f0f0f0;
+    }
+    .tag-list li.active {
+      background: #e6f7ff;
+      color: #1890ff;
+      font-weight: 500;
+    }
+    .tag-count {
+      font-size: 12px;
+      color: #999;
+      background: #f0f0f0;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .main-content {
+      flex: 1;
+      margin-left: 240px;
+      padding: 24px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      font-size: 24px;
+      font-weight: 600;
+    }
+    .search-box {
+      width: 300px;
+      padding: 8px 12px;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+    }
+    .search-box:focus {
+      border-color: #1890ff;
+      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+    }
+    .links-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      gap: 16px;
+    }
+    .link-card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 16px;
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    .link-card:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      border-color: #d0d0d0;
+    }
+    .link-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .link-title a {
+      color: #1890ff;
+      text-decoration: none;
+    }
+    .link-title a:hover {
+      text-decoration: underline;
+    }
+    .link-desc {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .link-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #999;
+    }
+    .link-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 8px;
+    }
+    .link-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      background: #f0f7ff;
+      color: #1890ff;
+      border-radius: 3px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .link-tag:hover {
+      background: #d6e8ff;
+    }
+    .footer-info {
+      margin-top: 24px;
+      text-align: center;
+      color: #999;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <aside class="sidebar">
+      <h2>标签分类</h2>
+      <ul class="tag-list" id="tagList">
+        <li class="active" data-tag="all">
+          全部
+        </li>
+        {allTags.map(tag => (
+          <li data-tag={tag}>
+            {tag}
+          </li>
+        ))}
+      </ul>
+    </aside>
+
+    <main class="main-content">
+      <div class="header">
+        <h1>Share You Like</h1>
+        <input class="search-box" type="text" id="searchBox" placeholder="搜索链接..." />
+      </div>
+
+      <div class="links-grid" id="linksGrid">
+        {links.map(link => (
+          <div class="link-card" data-tags={(link.tags || []).join(',')} data-title={(link.title || '').toLowerCase()} data-desc={(link.description || '').toLowerCase()}>
+            <div class="link-title">
+              <a href={link.url} target="_blank" rel="noopener noreferrer">
+                {link.title || link.url}
+              </a>
+            </div>
+            {link.description && (
+              <div class="link-desc">{link.description}</div>
+            )}
+            <div class="link-meta">
+              {link.date && <span>📅 {link.date}</span>}
+              {link.source && <span>🔗 {link.source}</span>}
+            </div>
+            {link.tags && link.tags.length > 0 && (
+              <div class="link-tags">
+                {link.tags.map(tag => (
+                  <span class="link-tag" data-tag={tag}>{tag}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div class="footer-info">
+        共 {links.length} 个链接 · Share You Like
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const tagList = document.getElementById('tagList');
+    const linksGrid = document.getElementById('linksGrid');
+    const searchBox = document.getElementById('searchBox');
+    let currentTag = 'all';
+    let currentSearch = '';
+
+    // 标签筛选
+    tagList.addEventListener('click', (e) => {
+      const li = e.target.closest('li');
+      if (!li) return;
+
+      document.querySelectorAll('.tag-list li').forEach(item => item.classList.remove('active'));
+      li.classList.add('active');
+
+      currentTag = li.dataset.tag;
+      filterLinks();
+    });
+
+    // 标签点击筛选
+    linksGrid.addEventListener('click', (e) => {
+      if (e.target.classList.contains('link-tag')) {
+        const tag = e.target.dataset.tag;
+        const li = document.querySelector(`.tag-list li[data-tag="${tag}"]`);
+        if (li) {
+          document.querySelectorAll('.tag-list li').forEach(item => item.classList.remove('active'));
+          li.classList.add('active');
+          currentTag = tag;
+          filterLinks();
         }
-        .sidebar ul {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.25rem;
-        }
-        .sidebar li {
-          flex: 0 0 auto;
-          padding: 0.3rem 0.75rem;
-          font-size: 0.85rem;
-        }
-        .content { padding: 1rem; }
-        header { padding: 1rem; }
       }
-    </style>
-  </head>
-  <body>
-    <div class="app">
-      <header>
-        <h1>📚 Link Shelf</h1>
-        <div class="search-container">
-          <input type="text" id="search-input" placeholder="搜索链接（标题、分类、来源）..." />
-        </div>
-      </header>
-      <main>
-        <aside class="sidebar">
-          <h2>分类</h2>
-          <ul id="category-list">
-            <li data-category="" class="active" id="cat-all">
-              全部 <span class="count">{totalCount}</span>
-            </li>
-            {categories.map(cat => (
-              <li data-category={cat}>
-                {cat} <span class="count">{categoryCounts[cat]}</span>
-              </li>
-            ))}
-          </ul>
-        </aside>
-        <section class="content">
-          {links.length === 0 ? (
-            <div class="empty">暂无链接</div>
-          ) : (
-            <ul id="link-list" style="list-style: none; padding: 0; margin: 0;">
-              {links.map(link => {
-                const category = link.category || '';
-                const searchStr = `${link.title || ''} ${category} ${link.provider || ''}`.toLowerCase();
-                return (
-                  <li class="link-item" key={link.id} data-category={category} data-search={searchStr}>
-                    <div class="link-title">
-                      <a href={link.url} target="_blank" rel="noopener noreferrer">
-                        {link.title || link.url}
-                      </a>
-                    </div>
-                    <div class="link-meta">
-                      {link.category && <span>分类：{link.category}</span>}
-                      {link.provider && <span>来源：{link.provider}</span>}
-                      {link.publishedAt && <span>日期：{link.publishedAt}</span>}
-                      {link.accessCode && <span>提取码：{link.accessCode}</span>}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-          <div id="no-results" class="no-results">没有找到匹配的链接</div>
-        </section>
-      </main>
-    </div>
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const searchInput = document.getElementById('search-input');
-        const listItems = document.querySelectorAll('#link-list .link-item');
-        const noResults = document.getElementById('no-results');
-        const categoryItems = document.querySelectorAll('#category-list li');
-        const totalCountSpan = document.querySelector('#cat-all .count');
+    });
 
-        if (!searchInput || !listItems.length) return;
+    // 搜索
+    searchBox.addEventListener('input', (e) => {
+      currentSearch = e.target.value.toLowerCase();
+      filterLinks();
+    });
 
-        // 获取所有分类名（用于精确匹配）
-        const allCategories = [];
-        categoryItems.forEach(li => {
-          const cat = li.dataset.category;
-          if (cat !== undefined && cat !== '') {
-            allCategories.push(cat);
-          }
-        });
-
-        // 更新分类高亮
-        function highlightCategory(query) {
-          const trimmed = query.trim();
-          let matched = false;
-          categoryItems.forEach(li => {
-            const cat = li.dataset.category;
-            if (cat === '' && trimmed === '') {
-              li.classList.add('active');
-              matched = true;
-            } else if (cat !== '' && cat === trimmed) {
-              li.classList.add('active');
-              matched = true;
-            } else {
-              li.classList.remove('active');
-            }
-          });
-          // 如果没有匹配到任何分类，高亮“全部”
-          if (!matched) {
-            document.getElementById('cat-all')?.classList.add('active');
-          }
-        }
-
-        // 过滤链接
-        function filterLinks(query) {
-          const q = query.trim().toLowerCase();
-          let hasMatch = false;
-          let isExactCategory = false;
-          // 检查是否精确匹配某个分类（忽略大小写）
-          const exactCategory = allCategories.find(cat => cat.toLowerCase() === q);
-          if (exactCategory) {
-            isExactCategory = true;
-          }
-
-          listItems.forEach(item => {
-            const category = item.dataset.category || '';
-            const searchData = item.dataset.search || '';
-            let show = false;
-            if (q === '') {
-              show = true;
-            } else if (isExactCategory) {
-              // 精确分类匹配
-              show = (category.toLowerCase() === q);
-            } else {
-              // 模糊搜索
-              show = searchData.includes(q);
-            }
-            if (show) {
-              item.style.display = '';
-              hasMatch = true;
-            } else {
-              item.style.display = 'none';
-            }
-          });
-
-          // 显示/隐藏无结果提示
-          if (q !== '' && !hasMatch) {
-            noResults.style.display = 'block';
-          } else {
-            noResults.style.display = 'none';
-          }
-
-          // 更新分类高亮
-          highlightCategory(q);
-        }
-
-        // 搜索框输入事件
-        searchInput.addEventListener('input', function() {
-          filterLinks(this.value);
-        });
-
-        // 分类点击事件
-        categoryItems.forEach(li => {
-          li.addEventListener('click', function() {
-            const cat = this.dataset.category;
-            if (cat === '') {
-              searchInput.value = '';
-            } else {
-              searchInput.value = cat;
-            }
-            // 触发 input 事件以应用过滤
-            searchInput.dispatchEvent(new Event('input'));
-          });
-        });
-
-        // 初始显示：全部
-        filterLinks('');
+    function filterLinks() {
+      const cards = document.querySelectorAll('.link-card');
+      cards.forEach(card => {
+        const tags = card.dataset.tags || '';
+        const title = card.dataset.title || '';
+        const desc = card.dataset.desc || '';
+        const tagMatch = currentTag === 'all' || tags.split(',').includes(currentTag);
+        const searchMatch = !currentSearch || title.includes(currentSearch) || desc.includes(currentSearch);
+        card.style.display = (tagMatch && searchMatch) ? '' : 'none';
       });
-    </script>
-  </body>
+    }
+  </script>
+</body>
 </html>
