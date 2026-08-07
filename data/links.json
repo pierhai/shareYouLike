@@ -154,7 +154,35 @@
     "url": "https://pan.quark.cn/s/e9b68ab71b2b",
     "accessCode": "",
     "provider": "quark",
-    "tags": ["软件"],
+    "tags": [
+      "软件"
+    ],
+    "description": "",
+    "status": "active",
+    "publishedAt": "2026-08-07"
+  },
+  {
+    "id": "9b9a72868db6",
+    "title": "酷我音乐_12.0.6.1by东明.apk",
+    "url": "https://pan.quark.cn/s/9b9a72868db6",
+    "accessCode": "",
+    "provider": "quark",
+    "tags": [
+      "音乐"
+    ],
+    "description": "",
+    "status": "active",
+    "publishedAt": "2026-08-07"
+  },
+  {
+    "id": "f4a49bed5c1d",
+    "title": "酷我音乐12.0.6.1ApkFx.apk",
+    "url": "https://pan.quark.cn/s/f4a49bed5c1d",
+    "accessCode": "",
+    "provider": "quark",
+    "tags": [
+      "音乐"
+    ],
     "description": "",
     "status": "active",
     "publishedAt": "2026-08-07"
