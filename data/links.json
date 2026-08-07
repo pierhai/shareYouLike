@@ -141,6 +141,19 @@
     "url": "https://pan.quark.cn/s/ec52fa146a9c",
     "accessCode": "",
     "provider": "quark",
+    "tags": [
+      "软件"
+    ],
+    "description": "",
+    "status": "active",
+    "publishedAt": "2026-08-07"
+  },
+  {
+    "id": "e9b68ab71b2b",
+    "title": "傲软录屏ApowerREC",
+    "url": "https://pan.quark.cn/s/e9b68ab71b2b",
+    "accessCode": "",
+    "provider": "quark",
     "tags": ["软件"],
     "description": "",
     "status": "active",
