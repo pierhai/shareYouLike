@@ -65,16 +65,10 @@ provide a contact and removal channel before it is made public.
 ### 本地运行
 node scripts/import.mjs data/batch-import.txt
 
-### 部署（GitHub Actions 自动）
-1. 编辑 `data/batch-import.txt`，粘贴分享文本（格式：`「标题」...链接：https://...`）
-2. 可选：编辑 `tag-mappings.json` 自定义关键词→标签映射
-3. 提交并推送：
-   ```bash
-   git add data/batch-import.txt
-   git commit -m "增量添加链接"
-   git push origin main
-   ```
-4. GitHub Actions 会自动运行导入脚本并部署到 GitHub Pages
+git add data/batch-import.txt
+git commit -m "增量添加链接"
+git push origin main
+
 
 ### 标签自动生成
 导入时根据标题关键词自动匹配 `tag-mappings.json` 中的规则生成标签。

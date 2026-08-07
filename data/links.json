@@ -134,5 +134,16 @@
     "description": "",
     "status": "active",
     "publishedAt": "2026-08-07"
+  },
+  {
+    "id": "ec52fa146a9c",
+    "title": "Adobe Acrobat Pro DC",
+    "url": "https://pan.quark.cn/s/ec52fa146a9c",
+    "accessCode": "",
+    "provider": "quark",
+    "tags": ["软件"],
+    "description": "",
+    "status": "active",
+    "publishedAt": "2026-08-07"
   }
 ]
